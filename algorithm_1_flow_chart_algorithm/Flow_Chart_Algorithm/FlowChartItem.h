@@ -1,8 +1,8 @@
 #pragma once
 #include <stdio.h>
 #include <string>
-#include <map>
 #include <vector>
+#include <iostream>
 
 #define TITLE_CAP 15
 #define TABULAR_VIEW_MARKER "_tblvw"
@@ -58,7 +58,7 @@ public:
 	bool addItem(std::string titleToAdd, std::string parentTitle, int parentCenterPos) {
 		if (title == parentTitle) {
 			//add child to flow chart items vector
-			children.push_back(FlowChartItem(determineStartingPos(parentCenterPos), length, titleToAdd, title.size() > 0 ? title : titlePreview));
+			children.push_back(FlowChartItem(determineStartingPos(parentCenterPos), length, titleToAdd, title));
 			return true;
 		}
 		else {
@@ -102,7 +102,7 @@ public:
 
 	std::string removeItem(std::string titleToRemove) {
 		if (title == titleToRemove) {
-			//remove child flow chart items
+			//remove child flow chart item(s)
 			children.clear();
 			return parent;
 		}
@@ -110,7 +110,7 @@ public:
 			for (auto& child : children) {
 				int postRemovalSiblingCount = children.size() - 1;
 				std::string completionFlag = child.removeItem(titleToRemove);
-				if (completionFlag.size() > 0) { 
+				if (completionFlag.size() > 0) {
 					//remove the child element
 					if (title == completionFlag) {
 						for (int i = 0; i < children.size(); i++) {
@@ -120,11 +120,6 @@ public:
 							}
 						}
 
-						/*
-						if this is the parent of the child that just got removed
-						and the sibling count is now 3 or less, the TABULAR_VIEW_MARKER should
-						get removed
-						*/
 						if (title == completionFlag && postRemovalSiblingCount == 3) {
 							for (auto& childItem : children) {
 								replace(childItem.title, TABULAR_VIEW_MARKER, "");
@@ -135,22 +130,21 @@ public:
 					}
 				}
 			}
-			return "";
 		}
 	}
 
-	/*If marked with the TABULAR_VIEW_MARKER the item's child elements will not display*/
-	void show(int screenWidth, int parentCenterPos, int siblingCount, int siblingPos, bool firstItem = false, bool tableView = false, 
-		bool sameLine = false, bool lastChild = false, bool firstChild = true, bool stillPrintingRow = false) {
+	void show(int screenWidth, int parentCenterPos, int siblingCount, int siblingPos, bool firstItem = false, bool tableView = false,
+		bool sameLine = false, bool lastChild = false, bool firstChild = true) {
 		//create bracket
 		if (!firstItem && !sameLine && !tableView) bracketDisplay(parentCenterPos, siblingCount, parent.size());
+
 		//show the current item
 		int startingDisplayPos = 0;
 		if (firstItem) {
 			startingDisplayPos = (screenWidth / 2) - SEPARATION;
 			std::cout << stringExtender(" ", startingDisplayPos - 1) << (title.size() > TITLE_CAP ? titlePreview : title) << "\n";
 
-			if (!stillPrintingRow) showCascading(screenWidth);
+			showCascading(screenWidth);
 		}
 		else {
 			//set the starting position based on which sibling it is
@@ -159,7 +153,7 @@ public:
 				switch (siblingPos) {
 				case 1:
 					if (siblingCount == 1) {
-						startingDisplayPos = parentCenterPos - (parentLength);
+						startingDisplayPos = parentCenterPos - parentLength;
 					}
 					else {
 						startingDisplayPos = (parentCenterPos - parentLength - (parentLength / 2)) - SEPARATION;
@@ -177,99 +171,59 @@ public:
 
 				if (siblingCount > 1) {
 					if (lastChild) {
-						std::cout << stringExtender(" ", SEPARATION) << (title.size() > TITLE_CAP ? titlePreview : title) << "\n";
+						std::cout << stringExtender(" ", SEPARATION) << title << "\n";
 					}
 					else if (firstChild) {
-						std::cout << stringExtender(" ", startingDisplayPos + OFFSET - 1) << (title.size() > TITLE_CAP ? titlePreview : title);
+						std::cout << stringExtender(" ", startingDisplayPos + OFFSET - 1) << title;
 					}
 					else {
-						std::cout << stringExtender(" ", SEPARATION) << (title.size() > TITLE_CAP ? titlePreview : title);
+						std::cout << stringExtender(" ", SEPARATION) << title;
 					}
 				}
 				else {
-					std::cout << stringExtender(" ", startingDisplayPos - 1) << (title.size() > TITLE_CAP ? titlePreview : title) << "\n";
+					std::cout << stringExtender(" ", startingDisplayPos + OFFSET - 1) << title << "\n";
 				}
 
 				//now show the children items if not marked with the TABULAR_VIEW_MARKER
-				if (!stillPrintingRow) showCascading(screenWidth);
+				showCascading(screenWidth);
 			}
 			else {
 				//show tabular view of children
 				startingDisplayPos = (parentCenterPos - (TITLE_CAP / 2));
 				std::cout << stringExtender(" ", startingDisplayPos - 1) << (title.size() > TITLE_CAP ? titlePreview : title) << "\n"
-					<< stringExtender(" ", startingDisplayPos - 1) << stringExtender("-",TITLE_CAP) << "\n";
+					<< stringExtender(" ", startingDisplayPos - 1) << stringExtender("-", TITLE_CAP) << "\n";
 			}
 		}
 	}
 
 	void showCascading(int screenWidth) {
-		bool stillPrintingCurrentRow = false;
 		if (children.size() > 0) {
 			if (children.size() > 3) {
 				for (int i = 0; i < children.size(); i++) {
-					if (children.at(i).children.size() > 0) {
-						stillPrintingCurrentRow = true;
-					}
 
 					if (i == children.size() - 1) {
-						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, true, false, true);
+						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, true, false);
 					}
 					else if (i == 0) {
-						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, false, false, true, true);
+						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, false, false, true);
 					}
 					else {
-						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, false, false, true);
+						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, false, false);
 					}
 				}
 
-				//show child elements of children if there are any
-				if (stillPrintingCurrentRow) {
-					for (int i = 0; i < children.size(); i++) {
-						for (int j = 0; j < children.at(i).children.size(); j++) {
-							if (i == children.size() - 1) {
-								children.at(i).children.at(j).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, true, false, false);
-							}
-							else if (i == 0) {
-								children.at(i).children.at(j).show(screenWidth, centerPos, children.size(), i + 1, false, true, false, false, true, false);
-							}
-							else {
-								children.at(i).children.at(j).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, false, false, false);
-							}
-						}
-					}
-				}
 			}
 			else {
 				for (int i = 0; i < children.size(); i++) {
-					if (children.at(i).children.size() > 0) {
-						stillPrintingCurrentRow = true;
-					}
 
 					if (i == children.size() - 1) {
-						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, true, false, true);
+						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, false, true, true, false);
 					}
 					else if (i == 0) {
-						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, false, false, true, true);
+						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, false, false, false, true);
 					}
 					else {
-						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, false, false, true);
-					}
-				}
-
-				//show child elements of children if there are any
-				if (stillPrintingCurrentRow) {
-					for (int i = 0; i < children.size(); i++) {
-						for (int j = 0; j < children.at(i).children.size(); j++) {
-							if (j == children.at(i).children.size() - 1) {
-								children.at(i).children.at(j).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, true, false, false);
-							}
-							else if (j == 0) {
-								children.at(i).children.at(j).show(screenWidth, centerPos, children.size(), i + 1, false, true, false, false, true, false);
-							}
-							else {
-								children.at(i).children.at(j).show(screenWidth, centerPos, children.size(), i + 1, false, true, true, false, false, false);
-							}
-						}
+						children.at(i).show(screenWidth, centerPos, children.size(), i + 1, false, false, true, false, false);
 					}
 				}
 			}
@@ -277,7 +231,7 @@ public:
 	}
 
 	bool checkIfUniqueTitle(std::string titleToTest) {
-		//check the first item
+		//compare item title
 		if (title == titleToTest) return false;
 
 		if (children.size() > 0) {
@@ -306,15 +260,15 @@ private:
 						children.at(i).startingPos = tableStartingPos;
 					}
 
-					//adds marker to items that are in table view
-					children.at(i).title + TABULAR_VIEW_MARKER;
-					children.at(i).titlePreview + TABULAR_VIEW_MARKER;
+					//adds marker to items that are in the table view
+					children.at(i).title += TABULAR_VIEW_MARKER;
+					children.at(i).titlePreview += TABULAR_VIEW_MARKER;
 				}
 
 				return tableStartingPos;
 			}
 			else {
-				return (children.at(children.size() - 1).startingPos + SEPARATION);
+				return children.at(children.size() - 1).startingPos + SEPARATION;
 			}
 		}
 		else {
@@ -343,7 +297,7 @@ private:
 					std::cout << stringExtender("-", SEPARATION) << "\n";
 				}
 				else {
-					std::cout << stringExtender("-", SEPARATION) << " ";
+					std::cout << stringExtender("-", SEPARATION);
 				}
 			}
 		}
@@ -351,16 +305,12 @@ private:
 			std::cout << "\n";
 		}
 
-
 		//branch creation
 		std::cout << stringExtender(" ", parentCenterPos - SEPARATION - OFFSET);
 		if (siblingCount > 1) {
 			for (int i = 0; i < siblingCount; i++) {
 				if (i == siblingCount - 1) {
 					std::cout << stringExtender(" ", SEPARATION) << "|\n";
-				}
-				else if (i == 0) {
-					std::cout << "|";
 				}
 				else {
 					std::cout << stringExtender(" ", SEPARATION) << "|";
@@ -373,8 +323,8 @@ private:
 	}
 
 	void replace(std::string& stringToUpdate, const std::string stringToReplace, const std::string stringToReplaceWith) {
-		int start_pos = stringToUpdate.find(stringToReplace);
+		int startPos = stringToUpdate.find(stringToReplace);
 
-		stringToUpdate.replace(start_pos, stringToReplace.length(), stringToReplaceWith);
+		stringToUpdate.replace(startPos, stringToReplace.length(), stringToReplaceWith);
 	}
 };
