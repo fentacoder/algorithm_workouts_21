@@ -1,6 +1,6 @@
-/Flow_Chart_Algorithm/Debug
-/Flow_Chart_Algorithm/.vs
-/Flow_Chart_Algorithm/Flow_Chart_Algorithm.sln
-/Flow_Chart_Algorithm/Flow_Chart_Algorithm.vcxproj
-/Flow_Chart_Algorithm/Flow_Chart_Algorithm.vcxproj.filters
-/Flow_Chart_Algorithm/Flow_Chart_Algorithm.vcxproj.user
+/**/Debug
+/**/.vs
+/**/*.sln
+/**/*.vcxproj
+/**/*.vcxproj.filters
+/**/*.vcxproj.user
